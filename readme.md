@@ -544,3 +544,29 @@ JS在运行时可能会阻止UI渲染，这说明了两个线程是互斥的。�
 执行所有微任务
 当执行所有微任务后，如有必要会渲染页面
 然后开始下一轮EventLoop，执行宏任务中的异步代码
+
+## call的内部实现
+
+Function.prototype.myCall = function (context) {
+  context = context || window
+  context.fn = this
+  const args = [...arguments].slice(1)
+  const result = context.fn(args)
+  delete context.fn
+  return result
+}
+
+const obj = {
+  a: 1
+}
+
+function test() {
+  console.log(this)
+}
+
+test.myCall(obj, 'aaa')
+
+首先context为可选参数，如果不传的话默认上下文为window
+接下来给context创建一个fn属性，并将值设置为需要调用的函数
+因为call可以传入多个参数作为调用函数的参数，所以需要将参数剥离出来
+然后调用函数并将对象上的函数删除
